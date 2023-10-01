@@ -6,7 +6,7 @@ import Button from 'react-bootstrap/Button';
 
 import { ethers } from "ethers";
 import { useAccount, useContractRead, usePrepareContractWrite, useContractWrite } from 'wagmi';
-import { readContract } from "wagmi/actions";
+import { readContract, writeContract } from "wagmi/actions";
 
 import useDebounce from "../hooks/useDebounce";
 import TranscriptsArtifactsJson from "../artifacts/contracts/Transcript.sol/Transcripts.json";
@@ -19,23 +19,24 @@ const ContractDetails = {
     abi: TranscriptsArtifactsJson.abi
 }
 // const GiveAccessModal = 
-const RequestTranscriptModal = (props) => {
-    const [accessOfRef, setAccessOfRef] = useState();
-    const debouncedAccessOfRef = useDebounce(accessOfRef, 500);
-    const [dcRef, setDcRef] = useState();
+const GetTranscriptModal = (props) => {
+    const [institutionRef, setInstitutionRef] = useState();
+    const debouncedInstitutionRef = useDebounce(institutionRef, 500);
+    const [dcRef, setDcRef] = useState("");
     const debouncedDcRef = useDebounce(dcRef, 500);
-    const { config: accessRequestConfig, error: accessReqPrepError } = usePrepareContractWrite({
+    const { config: getTranscriptConfig, error: getTransPrepError } = usePrepareContractWrite({
         ...ContractDetails,
-        functionName: "requestAccess",
-        args: [debouncedAccessOfRef || "0x0000000000000000000000000000000000000000", debouncedDcRef || ""]
+        functionName: "getTranscript",
+        args: [debouncedInstitutionRef || "0x0000000000000000000000000000000000000000", debouncedDcRef.toString() || ""],
+        value: ethers.utils.parseEther("0.01")
     })
     const {
-        data: accessReqData,
-        isLoading: accessReqIsLoading,
-        error: accessReqError,
-        writeAsync: accessReqWrite,
-        isSuccess: accessReqIsSuccess,
-    } = useContractWrite(accessRequestConfig);
+        data: getTransData,
+        isLoading: getTransIsLoading,
+        error: getTransError,
+        writeAsync: getTransWrite,
+        isSuccess: getTransIsSuccess,
+    } = useContractWrite(getTranscriptConfig);
     return (
         <Modal
             {...props}
@@ -45,21 +46,21 @@ const RequestTranscriptModal = (props) => {
         >
             <Modal.Header closeButton>
                 <Modal.Title id="contained-modal-title-vcenter">
-                    Add a Transcript Request
+                    Get Transcript From Institution
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>  
             <Form>
-                <FloatingLabel controlId="floatingAccount" label="Account Address" className='mb-3'>
+                <FloatingLabel controlId="floatingAccount" label="Institution Address" className='mb-3'>
                 <Form.Control
                     type="text"
                     placeholder="0x4a6d...5a4dd"
-                    onChange={(e)=>{setAccessOfRef(e.target.value)}}
-                    name="accessOf"
-                    isValid={!accessReqPrepError}
-                    isInvalid={accessReqPrepError}
+                    onChange={(e)=>{setInstitutionRef(e.target.value)}}
+                    name="institutionAdd"
+                    isValid={!getTransPrepError}
+                    isInvalid={getTransPrepError}
                 />
-                <Form.Control.Feedback type='invalid'>{accessReqPrepError?.message}</Form.Control.Feedback>
+                <Form.Control.Feedback type='invalid'>{getTransPrepError?.message}</Form.Control.Feedback>
                 </FloatingLabel>
             
                 <FloatingLabel controlId="floatingdc" label="Document Name" className='mb-3'>
@@ -68,22 +69,22 @@ const RequestTranscriptModal = (props) => {
                     placeholder="Degree Name and College/Institution Name"
                     onChange={(e)=>{setDcRef(e.target.value)}}
                     name="documentName"
-                    isValid={!accessReqPrepError}
-                    isInvalid={accessReqPrepError}
+                    isValid={!getTransPrepError}
+                    isInvalid={getTransPrepError}
                 />
-                <Form.Control.Feedback type='invalid'>{accessReqPrepError?.message}</Form.Control.Feedback>            
+                <Form.Control.Feedback type='invalid'>{getTransPrepError?.message}</Form.Control.Feedback>            
                 </FloatingLabel>    
                 <Button onClick={async () => {
                     try {
-                        const txHash = await accessReqWrite?.();
+                        const txHash = await getTransWrite?.();
                         console.log(txHash?.hash);
-                        if (accessReqIsSuccess) {
+                        if (getTransIsSuccess) {
                             console.log("success");
                         }
                     } catch (error) {
                         console.log(error);
                     }     
-                }} variant="info" disabled={accessReqIsLoading || accessReqPrepError}>Add Transcript Request</Button>        
+                }} variant="info" disabled={getTransIsLoading || getTransPrepError}>Add Transcript Request</Button>        
             </Form>
             </Modal.Body>
         </Modal>
@@ -91,53 +92,105 @@ const RequestTranscriptModal = (props) => {
 }
 const IndividualRequestsPage = () => {
     const [modalShow, setModalShow] = useState(false);
+    const [hideAllowAccess, setHideAllowAccess] = useState(false);
     const {address:userAddress } = useAccount();
-    const { data: companyRequested, error: companyRequestedError,
-        isLoading: companyRequestedIsLoading } = useContractRead({
-        ...ContractDetails,
-        functionName: "getAllCompanyAccessRequests",
-        account: userAddress
-    })
+    const { data: indAccessRequest, error: indAccessRequestError,
+        isLoading: indAccessRequestIsLoading } = useContractRead({
+            ...ContractDetails,
+            functionName: "getAllIndAccessRequests",
+            account: userAddress
+        });
+    const {indGetTransRequest, error: indGetTransRequestError,
+        isLoading: indGetTransRequestIsLoading } = useContractRead({
+            ...ContractDetails,
+            functionName: "getAllIndividualTranscriptRequest",
+            account: userAddress
+        });
     return (
         <>
-        <RequestTranscriptModal show={modalShow} onHide={()=>setModalShow(false)} />    
+        <GetTranscriptModal show={modalShow} onHide={()=>setModalShow(false)} />    
         <Container fluid className='text-center my-5'>
-            <Button className="my-5" variant="info" onClick={() => setModalShow(true)}>Add Transcript Request</Button>
+            <Button className="my-5" variant="info" onClick={() => setModalShow(true)}>Request Transcript from Institution</Button>
+            <h5>Access Requests Give Access To these Documents to Companies</h5>
             <Table striped bordered hover>
                 <thead>
                 <tr>
                     <th>#</th>
-                    <th>Document Of Person</th>
+                    <th>Document Requested By</th>
                     <th>Document Name</th>
-                    <th>Access Granted</th>
+                    <th>Allow Access</th>
                 </tr>
                 </thead>
                 <tbody>
-                    {companyRequestedIsLoading && companyRequestedError ? <Spinner /> :
-                    companyRequested?.map((el, idx) => {
+                    {indAccessRequestIsLoading && indAccessRequestError ? <Spinner /> :
+                    indAccessRequest?.map((el, idx) => {
                         let docData;
                         readContract({
                             ...ContractDetails,
                             account: userAddress,
                             functionName: "documents",
-                            args: [el.access, ethers.utils.formatBytes32String(el.documentName)]
+                            args: [userAddress, ethers.utils.formatBytes32String(el.documentName)]
                         }).then((val)=>docData = val);
-                        console.log(docData);
                         return (
-                            <tr key={"requestsOrg_" + idx}>
+                            <tr key={"requestsInd_" + idx}>
                                 <td>{idx}</td>
                                 <td>{el.access}</td>
                                 <td>{el.documentName}</td>
-                                <td>{el.allowed ? "LINk" :
-                                    <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 48 48">
-                                    <path fill="#F44336" d="M21.5 4.5H26.501V43.5H21.5z" transform="rotate(45.001 24 24)"></path><path fill="#F44336" d="M21.5 4.5H26.5V43.501H21.5z" transform="rotate(135.008 24 24)"></path>
-                                    </svg>}
+                                <td>{docData ? docData.accessAllowed[el.access] ? "Access Provided!" : "Institution has not uploaded the Document Yet! Request The institution if you haven't yet or wait for Institution to upload!" : <Button variant='info' disabled={hideAllowAccess} onClick={async () => {
+                                    setHideAllowAccess(true);
+                                    await writeContract({
+                                        ...ContractDetails,
+                                        account: userAddress,
+                                        functionName: "giveAccess",
+                                        args: [
+                                            el.access,
+                                            ethers.utils.formatBytes32String(el.documentName),
+                                            idx
+                                        ]
+                                    });
+                                    setHideAllowAccess(false);
+                                }}>Allow Access</Button>}
                                 </td>
                             </tr>
                         );
                     })}    
                 </tbody>
             </Table>
+            <h5>List Of Transcripts Requests You've made From Institution</h5>
+            <Table striped bordered hover>
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Institution</th>
+                    <th>Document Name</th>
+                    <th>Document Uploaded</th>
+                </tr>
+                </thead>
+                <tbody>
+                    {indGetTransRequestIsLoading && indGetTransRequestError ? <Spinner /> :
+                    indGetTransRequest?.map((el, idx) => {
+                        let docData;
+                        readContract({
+                            ...ContractDetails,
+                            account: userAddress,
+                            functionName: "documents",
+                            args: [userAddress, ethers.utils.formatBytes32String(el.documentName)]
+                        }).then((val)=>docData = val);
+                        return (
+                            <tr key={"requestsInd_" + idx}>
+                                <td>{idx}</td>
+                                <td>{el.institution}</td>
+                                <td>{el.documentName}</td>
+                                <td>{docData ? <Button variant='info'>
+                                    <a rel="noreferrer" href={`https://files.lighthouse.storage/viewFile/${docData}`} target="_blank">
+                                        Allow Access</a></Button>
+                                    : "Institution has not uploaded the Document Yet!"}
+                                </td>
+                            </tr>
+                        );
+                    })}    
+                </tbody>
+            </Table>    
         </Container>
         </>
     );

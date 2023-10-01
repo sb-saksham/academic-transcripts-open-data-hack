@@ -4,7 +4,7 @@ import lighthouse from '@lighthouse-web3/sdk';
 import {  useState } from 'react';
 
 function UploadTranscriptsPage() {
-    const[cid,SetCid]=useState("");
+    const[cid, SetCid]=useState("");
     const [account, setAccount] = useState('');
 
   const encryptionSignature = async() =>{
@@ -26,7 +26,8 @@ function UploadTranscriptsPage() {
       });
     const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
-    const address = await signer.getAddress();
+      const address = await signer.getAddress();
+    console.log("huh", address)  
     const messageRequested = (await lighthouse.getAuthMessage(address)).data.message;
     const signedMessage = await signer.signMessage(messageRequested);
     setAccount(accounts[0]);

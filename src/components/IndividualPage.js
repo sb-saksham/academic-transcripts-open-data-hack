@@ -18,7 +18,8 @@ const ContractDetails = {
     address: "0x87A555014b415118f690394c2DD2bC7E50082f97",
     abi: TranscriptsArtifactsJson.abi
 }
-const TranscriptAddModal = (props) => {
+// const GiveAccessModal = 
+const RequestTranscriptModal = (props) => {
     const [accessOfRef, setAccessOfRef] = useState();
     const debouncedAccessOfRef = useDebounce(accessOfRef, 500);
     const [dcRef, setDcRef] = useState();
@@ -88,7 +89,7 @@ const TranscriptAddModal = (props) => {
         </Modal>
     );
 }
-const TranscriptsRequested = () => {
+const IndividualRequestsPage = () => {
     const [modalShow, setModalShow] = useState(false);
     const {address:userAddress } = useAccount();
     const { data: companyRequested, error: companyRequestedError,
@@ -99,7 +100,7 @@ const TranscriptsRequested = () => {
     })
     return (
         <>
-        <TranscriptAddModal show={modalShow} onHide={()=>setModalShow(false)} />    
+        <RequestTranscriptModal show={modalShow} onHide={()=>setModalShow(false)} />    
         <Container fluid className='text-center my-5'>
             <Button className="my-5" variant="info" onClick={() => setModalShow(true)}>Add Transcript Request</Button>
             <Table striped bordered hover>
@@ -142,4 +143,4 @@ const TranscriptsRequested = () => {
     );
 }
 
-export default TranscriptsRequested;
+export default IndividualRequestsPage;

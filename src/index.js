@@ -9,19 +9,25 @@ import "@rainbow-me/rainbowkit/styles.css";
 
 import { WagmiConfig, configureChains, createConfig } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
-import { mainnet, sepolia } from 'wagmi/chains';
-import { alchemyProvider } from 'wagmi/providers/alchemy';
+import { mainnet, sepolia, filecoinCalibration } from 'wagmi/chains';
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit';
+
 const { chains, publicClient, webSocketClient } = configureChains(
-  [mainnet, sepolia],
+  [mainnet, sepolia, filecoinCalibration],
   [
-    alchemyProvider({ apiKey: import.meta.env.VITE_APP_ALCHEMY_API_KEY }),
+    jsonRpcProvider({
+      rpc: (_) => ({
+        http: `https://filecoin-calibration-testnet.rpc.thirdweb.com`,
+      }),
+    }),
+    // alchemyProvider({ apiKey: import.meta.env.VITE_APP_ALCHEMY_API_KEY }),
     publicProvider()
   ]
 );
 const {connectors} = getDefaultWallets({
   appName: "Academic Transcripts",
-  projectId: import.meta.env.REACT_APP_WALLET_C_PROJECT_ID,
+  projectId: "3d2b96069c4e8594a195d3c7cbc1c65c",
   chains
 });
 const wagmiConfig = createConfig({

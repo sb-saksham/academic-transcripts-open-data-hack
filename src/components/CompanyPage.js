@@ -13,6 +13,7 @@ import TranscriptsArtifactsJson from "../artifacts/contracts/Transcript.sol/Tran
 import Spinner from "./UI/Spinner/Spinner";
 import Container from 'react-bootstrap/esm/Container';
 import FloatingLabel from 'react-bootstrap/esm/FloatingLabel';
+import { toast } from 'react-toastify';
 
 const ContractDetails = {
     address: "0x87A555014b415118f690394c2DD2bC7E50082f97",
@@ -76,11 +77,14 @@ const TranscriptAddModal = (props) => {
                     try {
                         const txHash = await accessReqWrite?.();
                         console.log(txHash?.hash);
+                        toast.success("Access Request Submitted Successfully!")
                         if (accessReqIsSuccess) {
                             console.log("success");
+
                         }
                     } catch (error) {
                         console.log(error);
+                        toast.error("An error occurred!")
                     }     
                 }} variant="info" disabled={accessReqIsLoading || accessReqPrepError}>Add Transcript Request</Button>        
             </Form>

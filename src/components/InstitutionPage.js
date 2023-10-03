@@ -25,14 +25,15 @@ const VerifiedUserOracle = {
     abi: VerifiedUserOracleArtifacts.abi
 }
 const TranscriptAddModal = (props) => {
-    const[cid, SetCid]=useState("");
+    const [cid, SetCid] = useState("");
+    const [buttonOn, setButtonOn] = useState(true);
     const { address: userAddress } = useAccount();
     const [transFile, setTransFile] = useState();
     const { config: uploadTransConfig, error: uploadTransPrepError } = usePrepareContractWrite({
         ...ContractDetails,
         functionName: "uploadTranscript",
-        args: [props.currentRequestedBy || "0x0000000000000000000000000000000000000000",
-            props.currentDocumentName ? ethers.utils.formatBytes32String(props.currentDocumentName) : ethers.utils.formatBytes32String(""),
+        args: [props.currentrequestedby || "0x0000000000000000000000000000000000000000",
+            props.currentdocumentname ? ethers.utils.formatBytes32String(props.currentdocumentname) : ethers.utils.formatBytes32String(""),
             cid ? ethers.utils.formatBytes32String(cid) : ethers.utils.formatBytes32String("")
         ]
     })
@@ -61,14 +62,14 @@ const TranscriptAddModal = (props) => {
                     <Form.Control
                         type="text"
                         disabled   
-                        value={props.currentRequestedBy}
+                        value={props.currentrequestedby}
                     />
                 </FloatingLabel>
                 <FloatingLabel controlId="floatingAccount" label="Document Name" className='mb-3'>
                     <Form.Control
                         type="text"
                         disabled
-                        value={props.currentDocumentName}
+                        value={props.currentdocumentname}
                     />
                 </FloatingLabel>    
                 <Form.Control.Feedback type='invalid' >{uploadTransPrepError?.message}</Form.Control.Feedback>                
@@ -76,17 +77,14 @@ const TranscriptAddModal = (props) => {
                     <Form.Label>Upload the Transcript File</Form.Label>
                     <Form.Control type="file" required onChange={(e)=>{setTransFile(e.target.files[0])}}/>
                 </Form.Group>      
-                <Button onClick={async () => {     
-                    if (!cid) {
-                        toast.error("File CID not present!");
-                        return;    
-                    }
+                    <Button onClick={async () => {     
+                    setButtonOn(false);
                     try {
                         const messageRequested = (await lighthouse.getAuthMessage(userAddress)).data.message;
-                        const signedMessage = await signMessage(messageRequested);
+                        const signedMessage = await signMessage({ message: messageRequested });
                         const response = await lighthouse.uploadEncrypted(
                             transFile,
-                            "52e175d8.5a6d380c102e4fc49a5b5ecb2c19a5f1", //api key
+                            "d5bca996.658fe784ce7a4740b69691c94d1322eb", //api key
                             userAddress,
                             signedMessage,
                             null,
@@ -99,14 +97,14 @@ const TranscriptAddModal = (props) => {
                                 chain: "Calibration",
                                 method: "hasAccess",
                                 standardContractType: "Custom",
-                                contractAddress: "0xA542053D73b1048D43704491c54d34882Ac4439f",
+                                contractAddress: "0x87A555014b415118f690394c2DD2bC7E50082f97",
                                 returnValueTest: {
                                     comparator: "==",
                                     value: "true"
                                 },
-                                parameters: [userAddress, "userAddress", ethers.utils.formatBytes32String(props.currentDocumentName)],
+                                parameters: [userAddress, ":userAddress", ethers.utils.formatBytes32String(props.currentdocumentname)],
                                 inputArrayType: ["address", "address", "bytes32"],
-                                outputType: "bool"
+                                outputType: "bool",
                             },
                         ];
                         const aggregator = "([1])";
@@ -126,10 +124,12 @@ const TranscriptAddModal = (props) => {
                             toast.success("Uploaded Transcript Successfully");
                         }
                     } catch (error) {
+                        console.log(error);
                         toast.error(error.message ? error.message : "Upload Failed!")
                     }     
+                    setButtonOn(true);
                     }} variant="info"
-                    disabled={uploadTransIsLoading || uploadTransPrepError}>
+                    disabled={!buttonOn || uploadTransIsLoading || uploadTransPrepError}>
                 Add Transcript Request</Button>        
             </Form>
             </Modal.Body>
@@ -139,8 +139,8 @@ const TranscriptAddModal = (props) => {
 const InstitutionPage = () => {
     const [modalShow, setModalShow] = useState(false);
     const [uploadButton, hideUploadButton] = useState(false);
-    const [currentRequestedBy, setCurrentRequestedBy] = useState();
-    const [currentDocumentName, setCurrentDocumentName] = useState();
+    const [currentrequestedby, setCurrentRequestedBy] = useState();
+    const [currentdocumentname, setcurrentdocumentname] = useState();
     const { address:userAddress } = useAccount();
     const { data: institutionRequests, error: institutionRequestsError,
         isLoading: institutionRequestsIsLoading } = useContractRead({
@@ -150,7 +150,7 @@ const InstitutionPage = () => {
         });
     return (
         <>
-        <TranscriptAddModal currentRequestedBy={currentRequestedBy} currentDocumentName={currentDocumentName} show={modalShow} onHide={() => { setModalShow(false); hideUploadButton(false) }} />    
+        <TranscriptAddModal currentrequestedby={currentrequestedby} currentdocumentname={currentdocumentname} show={modalShow} onHide={() => { setModalShow(false); hideUploadButton(false) }} />    
         <Container fluid className='text-center my-5'>
             <Table striped bordered hover>
                 <thead>
@@ -171,7 +171,7 @@ const InstitutionPage = () => {
                             <td>{el.documentName}</td>
                             <td><Button onClick={() => {
                                 hideUploadButton(true);
-                                setCurrentDocumentName(el.documentName);
+                                setcurrentdocumentname(el.documentName);
                                 setCurrentRequestedBy(el.requestedBy);
                                 setModalShow(true);
                             }} disabled={uploadButton}>Upload Transcript</Button></td>

@@ -57,7 +57,7 @@ function UploadTranscriptsPage() {
     const sig = await encryptionSignature();
     const response = await lighthouse.uploadEncrypted(
       file,
-      "52e175d8.5a6d380c102e4fc49a5b5ecb2c19a5f1",
+      "52e175d8.5a6d380c102e4fc49a5b5ecb2c19a5f1", //api key
       sig.publicKey,
       sig.signedMessage,
       null,
@@ -65,36 +65,36 @@ function UploadTranscriptsPage() {
       );
      console.log(response.data);
       const { Hash } = response.data[0]
-      // Conditions to add
-    const conditions = [
-        {
-            id: 1,
-            chain: "Calibration",
-            method: "hasAccess",
-            standardContractType: "Custom",
-            contractAddress: "0xA542053D73b1048D43704491c54d34882Ac4439f",
-            returnValueTest: {
-                comparator: "==",
-                value: "true"
-            },
-            parameters: [account, ":userAddress", ethers.utils.formatBytes32String("content")],
-            inputArrayType: ["address", "address", "bytes32"],
-            outputType: "bool"
-        },
-      ];
-  
-      // Aggregator is what kind of operation to apply to access conditions
-      // Suppose there are two conditions then you can apply ([1] and [2]), ([1] or [2]), !([1] and [2]).
-      const aggregator = "([1])";
-      const res = await lighthouse.applyAccessCondition(
-        sig.publicKey,
-        Hash,
-        sig.signedMessage,
-        conditions,
-        aggregator
-      );
-      console.log(res.data);
-    SetCid(Hash)
+        // Conditions to add
+      const conditions = [
+          {
+              id: 1,
+              chain: "Calibration",
+              method: "hasAccess",
+              standardContractType: "Custom",
+              contractAddress: "0xA542053D73b1048D43704491c54d34882Ac4439f",
+              returnValueTest: {
+                  comparator: "==",
+                  value: "true"
+              },
+              parameters: [account, ":userAddress", ethers.utils.formatBytes32String("content")],
+              inputArrayType: ["address", "address", "bytes32"],
+              outputType: "bool"
+          },
+        ];
+    
+        // Aggregator is what kind of operation to apply to access conditions
+        // Suppose there are two conditions then you can apply ([1] and [2]), ([1] or [2]), !([1] and [2]).
+        const aggregator = "([1])";
+        const res = await lighthouse.applyAccessCondition(
+          sig.publicKey,
+          Hash,
+          sig.signedMessage,
+          conditions,
+          aggregator
+        );
+        console.log(res.data);
+      SetCid(Hash)
     /*
       output:
         data: [{

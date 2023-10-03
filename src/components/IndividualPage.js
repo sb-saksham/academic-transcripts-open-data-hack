@@ -100,7 +100,7 @@ const IndividualRequestsPage = () => {
             functionName: "getAllIndAccessRequests",
             account: userAddress
         });
-    const {indGetTransRequest, error: indGetTransRequestError,
+    const {data: indGetTransRequest, error: indGetTransRequestError,
         isLoading: indGetTransRequestIsLoading } = useContractRead({
             ...ContractDetails,
             functionName: "getAllIndividualTranscriptRequest",
@@ -174,8 +174,8 @@ const IndividualRequestsPage = () => {
                             ...ContractDetails,
                             account: userAddress,
                             functionName: "documents",
-                            args: [userAddress, ethers.utils.formatBytes32String(el.documentName)]
-                        }).then((val)=>docData = val);
+                            args: [userAddress, el.documentName ? ethers.utils.formatBytes32String(el.documentName) : ethers.utils.formatBytes32String("")]
+                        }).then((val) => docData = val);
                         return (
                             <tr key={"requestsInd_" + idx}>
                                 <td>{idx}</td>
